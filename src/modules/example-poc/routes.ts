@@ -5,6 +5,9 @@ const routes: RouteRecordRaw[] = [
     path: "/example-poc",
     name: "Example POC",
     component: () => import("./views/ExamplePoc.vue"),
+    meta: {
+      icon: "TestTubeIcon",
+    },
   },
 ];
 

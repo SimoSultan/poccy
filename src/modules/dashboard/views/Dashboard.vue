@@ -38,7 +38,6 @@ const features = ref([
           Your playground for experimental web ideas.
         </p>
       </div>
-      <Button variant="outline">Learn More</Button>
     </header>
 
     <div class="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
