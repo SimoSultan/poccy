@@ -19,29 +19,41 @@ const toggleSidebar = () => {
   isSidebarOpen.value = !isSidebarOpen.value;
 };
 
-// Map icon strings to imported icon objects
-const iconMap: Record<string, any> = {
+/**
+ * Map icon strings to imported icon objects.
+ * Centralizing this makes it easier to add new icons later.
+ */
+const ICON_MAP: Record<string, any> = {
   DashboardBrowsingIcon,
   TestTubeIcon,
   Menu01Icon,
 };
 
-const routes = computed(() => {
+const getIcon = (iconName: string | unknown) => {
+  if (typeof iconName === "string" && iconName in ICON_MAP) {
+    return ICON_MAP[iconName];
+  }
+  return HelpCircleIcon;
+};
+
+/**
+ * Filtered routes for the sidebar navigation.
+ * Excludes internal routes and the dashboard (handled separately).
+ */
+const sideNavRoutes = computed(() => {
   return router
     .getRoutes()
     .filter(
       (r) =>
         r.path !== "/" &&
-        !r.path.includes(":") &&
-        r.path.split("/").length === 2 &&
+        !r.path.includes(":") && // Exclude routes with params
+        r.path.split("/").length === 2 && // Only top-level modules
         r.name !== "Dashboard",
     )
     .map((r) => ({
       name: r.name ? String(r.name) : r.path.substring(1),
       path: r.path,
-      icon: r.meta?.icon
-        ? iconMap[r.meta.icon as string] || HelpCircleIcon
-        : HelpCircleIcon,
+      icon: getIcon(r.meta?.icon),
     }));
 });
 
@@ -55,18 +67,23 @@ const dashboardRoute = computed(() => {
       }
     : null;
 });
+
+// Shared classes for navigation links
+const navLinkClasses =
+  "group relative flex items-center rounded-xl p-3 text-gray-500 transition-all hover:bg-gray-100 hover:text-blue-600 md:justify-center lg:justify-start";
+const activeNavLinkClasses = "bg-blue-50/50 text-blue-600 font-bold";
 </script>
 
 <template>
   <div class="flex h-screen flex-col overflow-hidden bg-gray-50 font-sans">
-    <!-- Top Header - Persistent and full width -->
+    <!-- Top Header - Fixed height with z-index to stay above drawer -->
     <header
       class="relative z-50 flex h-20 shrink-0 items-center justify-between border-b bg-white px-6"
     >
       <div class="flex items-center gap-4">
         <!-- Animated Hamburger Button -->
         <button
-          class="relative z-[60] flex h-10 w-10 flex-col items-center justify-center gap-1.25 focus:outline-none lg:invisible"
+          class="relative z-50 flex h-10 w-10 flex-col items-center justify-center gap-1.25 focus:outline-none lg:invisible"
           aria-label="Toggle menu"
           @click="toggleSidebar"
         >
@@ -96,7 +113,8 @@ const dashboardRoute = computed(() => {
           ></span>
         </button>
 
-        <div class="flex items-center gap-3">
+        <!-- Branding -->
+        <router-link to="/dashboard" class="flex items-center gap-3">
           <div
             class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-600 text-white shadow-lg shadow-blue-100"
           >
@@ -113,9 +131,10 @@ const dashboardRoute = computed(() => {
               >Idea Lab</span
             >
           </div>
-        </div>
+        </router-link>
       </div>
 
+      <!-- User Profile Placeholder -->
       <div class="flex items-center gap-3">
         <div
           class="flex h-8 w-8 items-center justify-center rounded-full border border-blue-200 bg-blue-100"
@@ -125,9 +144,8 @@ const dashboardRoute = computed(() => {
       </div>
     </header>
 
-    <!-- Main Layout Container -->
     <div class="relative flex flex-1 overflow-hidden">
-      <!-- Content Overlay (only for Mobile/Tablet) -->
+      <!-- Sidebar Overlay (Mobile/Tablet Expanded) -->
       <transition
         enter-active-class="transition-opacity duration-300"
         enter-from-class="opacity-0"
@@ -144,13 +162,11 @@ const dashboardRoute = computed(() => {
         />
       </transition>
 
-      <!-- Sidebar - Overlaying on Tablet/Mobile -->
+      <!-- Navigation Sidebar -->
       <aside
         :class="
           cn(
-            'z-40 flex flex-col border-r bg-white transition-all duration-300 ease-in-out',
-            // Mobile/Tablet: Fixed so it overlays content
-            'fixed inset-y-0 left-0 lg:static lg:w-64 lg:translate-x-0',
+            'fixed inset-y-0 left-0 z-40 flex flex-col border-r bg-white transition-all duration-300 ease-in-out lg:static lg:w-64 lg:translate-x-0',
             !isSidebarOpen
               ? '-translate-x-full md:w-20 md:translate-x-0'
               : 'w-[85vw] translate-x-0 shadow-2xl sm:w-80 md:w-80',
@@ -159,23 +175,23 @@ const dashboardRoute = computed(() => {
         :style="{ top: '5rem' }"
       >
         <nav class="flex-1 space-y-1 overflow-y-auto px-3 py-6 md:px-2 lg:px-4">
-          <!-- Dashboard Link -->
+          <!-- Dashboard -->
           <router-link
             v-if="dashboardRoute"
             :to="dashboardRoute.path"
-            class="group relative flex items-center rounded-xl p-3 text-gray-500 transition-all hover:bg-gray-50 hover:text-blue-600 md:justify-center lg:justify-start"
-            active-class="bg-blue-50/50 text-blue-600 font-bold"
+            :class="navLinkClasses"
+            :active-class="activeNavLinkClasses"
             @click="isSidebarOpen = false"
           >
             <div
               :class="
                 cn(
                   'flex flex-1 items-center justify-between overflow-hidden lg:flex',
-                  !isSidebarOpen ? 'md:hidden' : 'flex',
+                  isSidebarOpen ? 'flex' : 'md:hidden',
                 )
               "
             >
-              <span class="truncate">Dashboard</span>
+              <span class="truncate">{{ dashboardRoute.name }}</span>
               <HugeiconsIcon
                 :icon="dashboardRoute.icon"
                 size="20"
@@ -190,38 +206,38 @@ const dashboardRoute = computed(() => {
             />
           </router-link>
 
-          <!-- Section Label -->
+          <!-- POC List Divider -->
           <div class="pt-6 pb-2">
             <p
               :class="
                 cn(
                   'px-4 text-[10px] font-bold tracking-[0.2em] text-gray-300 uppercase lg:block',
-                  !isSidebarOpen ? 'hidden md:hidden' : 'block',
+                  isSidebarOpen ? 'block' : 'hidden md:hidden',
                 )
               "
             >
               POCs
             </p>
             <div
-              class="mx-auto hidden h-px w-8 bg-gray-100 md:block lg:hidden"
               v-if="!isSidebarOpen"
+              class="mx-auto hidden h-px w-8 bg-gray-100 md:block lg:hidden"
             />
           </div>
 
-          <!-- POC Links -->
+          <!-- POCs -->
           <router-link
-            v-for="route in routes"
+            v-for="route in sideNavRoutes"
             :key="route.path"
             :to="route.path"
-            class="group relative flex items-center rounded-xl p-3 text-gray-500 transition-all hover:bg-gray-50 hover:text-blue-600 md:justify-center lg:justify-start"
-            active-class="bg-blue-50/50 text-blue-600 font-bold"
+            :class="navLinkClasses"
+            :active-class="activeNavLinkClasses"
             @click="isSidebarOpen = false"
           >
             <div
               :class="
                 cn(
                   'flex flex-1 items-center justify-between overflow-hidden lg:flex',
-                  !isSidebarOpen ? 'md:hidden' : 'flex',
+                  isSidebarOpen ? 'flex' : 'md:hidden',
                 )
               "
             >
@@ -241,32 +257,32 @@ const dashboardRoute = computed(() => {
           </router-link>
         </nav>
 
+        <!-- Versioning Info -->
         <div class="mt-auto flex justify-center border-t p-4">
           <div
             :class="
               cn(
                 'text-[10px] text-gray-300 lg:block',
-                !isSidebarOpen ? 'md:hidden' : 'block',
+                isSidebarOpen ? 'block' : 'md:hidden',
               )
             "
           >
             v0.1.0 Alpha
           </div>
           <div
-            class="hidden text-[10px] font-bold text-gray-300 md:block lg:hidden"
             v-if="!isSidebarOpen"
+            class="hidden text-[10px] font-bold text-gray-300 md:block lg:hidden"
           >
             v1
           </div>
         </div>
       </aside>
 
-      <!-- Main Content Area -->
+      <!-- Content View Area -->
       <main
         :class="
           cn(
             'flex-1 overflow-auto bg-gray-50/50 p-6 transition-all sm:p-8 lg:p-12',
-            // md:pl-28 = 20 (sidebar width) + 8 (standard gutter)
             'md:pl-28 lg:pl-12',
           )
         "
