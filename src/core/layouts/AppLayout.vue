@@ -10,7 +10,12 @@ import { HugeiconsIcon } from "@hugeicons/vue";
 import { computed, ref } from "vue";
 import { useRouter } from "vue-router";
 
+import ThemeToggle from "@/components/ThemeToggle.vue";
+import { useTheme } from "@/lib/theme";
 import { cn } from "@/lib/utils";
+
+// Initialize theme logic
+useTheme();
 
 const router = useRouter();
 const isSidebarOpen = ref(false);
@@ -70,15 +75,17 @@ const dashboardRoute = computed(() => {
 
 // Shared classes for navigation links
 const navLinkClasses =
-  "group relative flex items-center rounded-xl p-3 text-gray-500 transition-all hover:bg-gray-100 hover:text-blue-600 md:justify-center lg:justify-start";
-const activeNavLinkClasses = "bg-blue-50/50 text-blue-600 font-bold";
+  "group relative flex items-center rounded-xl p-3 text-muted-foreground transition-all hover:bg-muted hover:text-primary md:justify-center lg:justify-start";
+const activeNavLinkClasses = "bg-primary/10 text-primary font-bold";
 </script>
 
 <template>
-  <div class="flex h-screen flex-col overflow-hidden bg-gray-50 font-sans">
+  <div
+    class="bg-background text-foreground flex h-screen flex-col overflow-hidden font-sans transition-colors duration-300"
+  >
     <!-- Top Header - Fixed height with z-index to stay above drawer -->
     <header
-      class="relative z-50 flex h-20 shrink-0 items-center justify-between border-b bg-white px-6"
+      class="border-border bg-background relative z-50 flex h-20 shrink-0 items-center justify-between border-b px-6"
     >
       <div class="flex items-center gap-4">
         <!-- Animated Hamburger Button -->
@@ -122,7 +129,7 @@ const activeNavLinkClasses = "bg-blue-50/50 text-blue-600 font-bold";
           </div>
           <div class="flex flex-col">
             <h1
-              class="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-xl leading-none font-bold text-transparent"
+              class="bg-linear-to-r from-blue-600 to-purple-600 bg-clip-text text-xl leading-none font-bold text-transparent"
             >
               Poccy
             </h1>
@@ -134,8 +141,9 @@ const activeNavLinkClasses = "bg-blue-50/50 text-blue-600 font-bold";
         </router-link>
       </div>
 
-      <!-- User Profile Placeholder -->
-      <div class="flex items-center gap-3">
+      <!-- User Profile & Theme Toggle -->
+      <div class="flex items-center gap-4">
+        <ThemeToggle />
         <div
           class="flex h-8 w-8 items-center justify-center rounded-full border border-blue-200 bg-blue-100"
         >
@@ -166,7 +174,7 @@ const activeNavLinkClasses = "bg-blue-50/50 text-blue-600 font-bold";
       <aside
         :class="
           cn(
-            'fixed inset-y-0 left-0 z-40 flex flex-col border-r bg-white transition-all duration-300 ease-in-out lg:static lg:w-64 lg:translate-x-0',
+            'border-border bg-card fixed inset-y-0 left-0 z-40 flex flex-col border-r transition-all duration-300 ease-in-out lg:static lg:w-64 lg:translate-x-0',
             !isSidebarOpen
               ? '-translate-x-full md:w-20 md:translate-x-0'
               : 'w-[85vw] translate-x-0 shadow-2xl sm:w-80 md:w-80',
@@ -220,7 +228,7 @@ const activeNavLinkClasses = "bg-blue-50/50 text-blue-600 font-bold";
             </p>
             <div
               v-if="!isSidebarOpen"
-              class="mx-auto hidden h-px w-8 bg-gray-100 md:block lg:hidden"
+              class="bg-border mx-auto hidden h-px w-8 md:block lg:hidden"
             />
           </div>
 
@@ -282,7 +290,7 @@ const activeNavLinkClasses = "bg-blue-50/50 text-blue-600 font-bold";
       <main
         :class="
           cn(
-            'flex-1 overflow-auto bg-gray-50/50 p-6 transition-all sm:p-8 lg:p-12',
+            'bg-background flex-1 overflow-auto p-6 transition-all sm:p-8 lg:p-12',
             'md:pl-28 lg:pl-12',
           )
         "
